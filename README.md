@@ -7,6 +7,7 @@ This package provides a complete integration of HolmesGPT with KAITO (Kubernetes
 ### Prerequisites
 - KAITO cluster with deployed models (qwen2.5-coder-7b-instruct recommended)
 - kubectl access to your cluster
+- Python 3.8+ with pip and virtualenv support
 - Port forwarding to KAITO model endpoints
 
 ### Installation
@@ -18,23 +19,53 @@ This package provides a complete integration of HolmesGPT with KAITO (Kubernetes
    git apply path/to/kaito-integration.patch
    ```
 
-2. **Set up port forwarding** (in separate terminal):
+2. **Set up Python virtual environment** (REQUIRED for code changes):
+   ```bash
+   # Create virtual environment
+   python3 -m venv .venv
+   
+   # Activate virtual environment
+   source .venv/bin/activate  # On Linux/macOS
+   # .venv\Scripts\activate   # On Windows
+   ```
+
+3. **Install Holmes in editable mode** (CRITICAL for patch to work):
+   ```bash
+   pip install -e .
+   ```
+
+4. **Set up port forwarding** (in separate terminal):
    ```bash
    kubectl port-forward service/workspace-qwen2-5-coder-7b-instruct 8080:80
    ```
 
-3. **Run Holmes with KAITO**:
+5. **Run Holmes with KAITO**:
    ```bash
+   # Set environment variables (REQUIRED)
    export OPENAI_API_BASE="http://localhost:8080/v1"
    export OPENAI_API_KEY="dummy" 
    export HOLMES_TOOL_CHOICE="required"
    
+   # Run Holmes (ensure you're in the activated virtual environment)
    holmes ask "what pods are running?" \
      --model="openai/qwen2.5-coder-7b-instruct" \
      --config super-minimal-config.yaml \
      --max-steps=7 \
      --refresh-toolsets
    ```
+
+## Important Setup Notes
+
+### Python Environment Requirements
+- **Virtual Environment**: MANDATORY - Isolates dependencies and ensures patched code is used
+- **Editable Installation**: `pip install -e .` is REQUIRED for the patch modifications to take effect
+- **Environment Activation**: Must activate virtual environment (`source .venv/bin/activate`) before each Holmes session
+
+### Environment Variables
+All three environment variables are REQUIRED for proper operation:
+- **OPENAI_API_BASE**: Points to your KAITO model endpoint
+- **OPENAI_API_KEY**: Set to "dummy" (KAITO doesn't validate but Holmes requires it)
+- **HOLMES_TOOL_CHOICE**: Must be "required" for consistent tool calling behavior
 
 ## What's Included
 
@@ -61,12 +92,6 @@ The patch modifies 5 core Holmes files:
 
 Plus adds:
 - `super-minimal-config.yaml` - Minimal Holmes configuration
-
-## Environment Variables
-
-- **OPENAI_API_BASE**: Your KAITO model endpoint (e.g., http://localhost:8080/v1)
-- **OPENAI_API_KEY**: Dummy value (KAITO doesn't validate)
-- **HOLMES_TOOL_CHOICE**: Set to "required" for consistent tool calling
 
 ## Tested Configuration
 
